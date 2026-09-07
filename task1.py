@@ -43,7 +43,7 @@ def solve(extra_constraint=False):
             + crottle[i]
             + dupple[i]
         )
-
+        
         opt.add(weight <= 8000)
         opt.add(blocks <= 10)
 
