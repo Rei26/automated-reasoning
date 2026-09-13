@@ -83,8 +83,6 @@ def solve(extra_constraint=False):
     if opt.check() == sat:
 
         model = opt.model()
-
-        print("--------------------------------")
         if extra_constraint:
             print("PART (b)")
         else:
