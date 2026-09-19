@@ -2,24 +2,23 @@ from z3 import *
 
 MAX_STEPS = 36
 
-
 def check_k(k):
     solver = Solver()
 
-    # Program state after each iteration
+    #Program state after each iteration
     a = [Int(f"a_{i}") for i in range(MAX_STEPS + 1)]
     b = [Int(f"b_{i}") for i in range(MAX_STEPS + 1)]
 
-    # True = take the if branch, False = take the else branch
+    #True = take the if branch, False = take the else branch
     branch = [Bool(f"branch_{i}") for i in range(MAX_STEPS)]
 
-    # Initial state
+    #Initial state
     solver.add(a[0] == 1)
     solver.add(b[0] == 1)
 
     for i in range(MAX_STEPS):
 
-        # If the loop is still running, take one of the two branches.
+        #If the loop is still running, take one of the two branches.
         solver.add(
             Implies(
                 a[i] < 180,
@@ -27,13 +26,13 @@ def check_k(k):
                 If(
                     branch[i],
 
-                    # if (__nondet__()) is true
+                    #if (__nondet__()) is true
                     And(
                         b[i + 1] == b[i] + 3,
                         a[i + 1] == a[i] + 2 * b[i + 1]
                     ),
 
-                    # else
+                    #else
                     And(
                         b[i + 1] == b[i] + a[i],
                         a[i + 1] == a[i] + 5
@@ -41,7 +40,7 @@ def check_k(k):
                 )
             )
         )
-        # Once the loop has terminated, keep the state unchanged.
+        #Once the loop has terminated, keep the state unchanged.
         solver.add(
             Implies(
                 a[i] >= 180,
@@ -52,7 +51,7 @@ def check_k(k):
             )
         )
 
-    # Crash is possible if we terminate with b = 190 + k
+    #Crash is possible if we terminate with b = 190 + k
     crash = Or([
         And(
             a[i] >= 180,
@@ -70,7 +69,7 @@ def check_k(k):
 
         print(f"k = {k}: CRASH POSSIBLE")
 
-        # Print one complete execution
+        #Print one complete execution
         for i in range(MAX_STEPS + 1):
             ai = model.eval(a[i])
             bi = model.eval(b[i])
@@ -87,6 +86,6 @@ def check_k(k):
         print(f"k = {k}: SAFE")
         return False
 
-# Test all values of k
+#Test all values of k
 for k in range(11):
     check_k(k)

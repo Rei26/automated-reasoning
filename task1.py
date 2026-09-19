@@ -6,14 +6,14 @@ def solve(extra_constraint=False):
 
     opt = Optimize()
 
-    # Variables
+    #Variables
     nuzzle  = [Int(f"n_{i}") for i in range(N)]
     prittle = [Int(f"p_{i}") for i in range(N)]
     skipple = [Int(f"s_{i}") for i in range(N)]
     crottle = [Int(f"c_{i}") for i in range(N)]
     dupple  = [Int(f"d_{i}") for i in range(N)]
 
-    # Non-negative quantities
+    #Non-negative quantities
     for i in range(N):
         opt.add(nuzzle[i] >= 0)
         opt.add(prittle[i] >= 0)
@@ -21,13 +21,13 @@ def solve(extra_constraint=False):
         opt.add(crottle[i] >= 0)
         opt.add(dupple[i] >= 0)
 
-    # Required quantities
+    #Required quantities
     opt.add(Sum(nuzzle) == 6)
     opt.add(Sum(prittle) == 12)
     opt.add(Sum(skipple) == 15)
     opt.add(Sum(crottle) == 8)
 
-    # Truck capacity
+    #Truck capacity
     for i in range(N):
         weight = (
             800 * nuzzle[i]
@@ -47,12 +47,12 @@ def solve(extra_constraint=False):
         opt.add(weight <= 8000)
         opt.add(blocks <= 10)
 
-    # Prittles on at least 5 trucks
+    #Prittles on at least 5 trucks
     opt.add(
         Sum([If(prittle[i] > 0, 1, 0) for i in range(N)]) >= 5
     )
 
-    # Only 2 trucks can carry skipples
+    #Only 2 trucks can carry skipples
     skipple_truck = [Bool(f"skipple_truck_{i}") for i in range(N)]
     opt.add(
         Sum([If(skipple_truck[i], 1, 0) for i in range(N)]) == 2
@@ -65,7 +65,7 @@ def solve(extra_constraint=False):
                 skipple[i] == 0
             )
         )
-    # Extra constraint for part (b)
+    #Extra constraint for part b
     if extra_constraint:
         for i in range(N):
             opt.add(
@@ -75,11 +75,11 @@ def solve(extra_constraint=False):
                 )
             )
 
-    # Objective
+    #Objective
     total_dupples = Sum(dupple)
     opt.maximize(total_dupples)
 
-    # Solve
+    #Solve
     if opt.check() == sat:
 
         model = opt.model()
@@ -105,6 +105,6 @@ def solve(extra_constraint=False):
 
         print()
 
-# Output
-solve(False)   # Part (a)
-solve(True)    # Part (b)
+#Output
+solve(False)   #Part a
+solve(True)    #Part b
