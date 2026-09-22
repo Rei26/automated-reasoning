@@ -31,14 +31,14 @@ def solve_pcb_layout_z3():
         {"pcb": 2, "x1": 15, "y1": 22, "x2": 22, "y2": 27},
     ]
 
-    x = {}        # Bottom-left X
-    y = {}        # Bottom-left Y
-    w_eff = {}    # Effective width
-    h_eff = {}    # Effective height
-    rot = {}      # Rotation boolean (True = 90 deg)
-    pcb = {}      # PCB ID (1 or 2)
-    x_center = {} # Doubled center X (2 * xc)
-    y_center = {} # Doubled center Y (2 * yc)
+    x = {}        #Bottom-left X
+    y = {}        #Bottom-left Y
+    w_eff = {}    #Effective width
+    h_eff = {}    #Effective height
+    rot = {}      #Rotation boolean (True = 90 deg)
+    pcb = {}      #PCB ID (1 or 2)
+    x_center = {} #Doubled center X (2 * xc)
+    y_center = {} #Doubled center Y (2 * yc)
 
     for i, chip in chips.items():
         x[i] = Int(f"x_{i}")
@@ -50,35 +50,33 @@ def solve_pcb_layout_z3():
         x_center[i] = Int(f"xc_{i}")
         y_center[i] = Int(f"yc_{i}")
 
-        # PCB Selection constraint
+        #PCB Selection constraint
         s.add(Or(pcb[i] == 1, pcb[i] == 2))
 
-        # Bottom-left non-negative
+        #Bottom-left non-negative
         s.add(x[i] >= 0, y[i] >= 0)
 
-        # Effective Dimensions based on rotation
+        #Effective Dimensions based on rotation
         s.add(Implies(rot[i], And(w_eff[i] == chip["h"], h_eff[i] == chip["w"])))
         s.add(Implies(rot[i] == False, And(w_eff[i] == chip["w"], h_eff[i] == chip["h"])))
 
-        # PCB Boundary Constraints
+        #PCB Boundary Constraints
         s.add(Implies(pcb[i] == 1, And(x[i] + w_eff[i] <= pcb_dims[1][0], y[i] + h_eff[i] <= pcb_dims[1][1])))
         s.add(Implies(pcb[i] == 2, And(x[i] + w_eff[i] <= pcb_dims[2][0], y[i] + h_eff[i] <= pcb_dims[2][1])))
 
-        # Doubled Center Coordinates (avoids float arithmetic)
+        #Doubled Center Coordinates (avoids float arithmetic)
         s.add(x_center[i] == 2 * x[i] + w_eff[i])
         s.add(y_center[i] == 2 * y[i] + h_eff[i])
 
-    # ------------------------------------------------------------------
-    # 3. Non-Overlapping Constraints
-    # ------------------------------------------------------------------
+    #Non-Overlapping Constraints
     chip_ids = list(chips.keys())
 
-    # Between dynamic chips
+    #Between dynamic chips
     for i in range(len(chip_ids)):
         for j in range(i + 1, len(chip_ids)):
             c1, c2 = chip_ids[i], chip_ids[j]
 
-            # If placed on same PCB, at least one boundary separation must hold
+            # Ifplaced on same PCB, at least one boundary separation must hold
             no_overlap = Or(
                 x[c1] + w_eff[c1] <= x[c2],  # c1 left of c2
                 x[c2] + w_eff[c2] <= x[c1],  # c2 left of c1
@@ -87,7 +85,7 @@ def solve_pcb_layout_z3():
             )
             s.add(Implies(pcb[c1] == pcb[c2], no_overlap))
 
-    # Between dynamic chips and pre-placed fixed chips
+    #Between dynamic chips and pre-placed fixed chips
     for i, chip in chips.items():
         for fc in fixed_positions:
             no_fixed_overlap = Or(
@@ -98,10 +96,8 @@ def solve_pcb_layout_z3():
             )
             s.add(Implies(pcb[i] == fc["pcb"], no_fixed_overlap))
 
-    # ------------------------------------------------------------------
-    # 4. Thermal Constraints (20 units in X or Y)
-    # ------------------------------------------------------------------
-    # Doubled distance threshold = 2 * 20 = 40
+    #Thermal Constraints (20 units in X or Y)
+    #Doubled distance threshold = 2 * 20 = 40
     THERMAL_DIST_DOUBLED = 40
     warm_chip_ids = [i for i, c in chips.items() if c["warm"]]
 
@@ -116,9 +112,7 @@ def solve_pcb_layout_z3():
             # Must satisfy thermal separation if placed on the same PCB
             s.add(Implies(pcb[c1] == pcb[c2], thermal_sep))
 
-    # ------------------------------------------------------------------
-    # 5. Execute Solver & Print Solution
-    # ------------------------------------------------------------------
+    #Execute Solver & Print Solution
     if s.check() == sat:
         m = s.model()
         print("=== Z3 LAYOUT SOLUTION FOUND ===\n")
